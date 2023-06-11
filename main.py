@@ -6,6 +6,53 @@ from system_functions import load_settings, save_asymmetric_keys, save_symmetric
 
 SETTINGS_FILE = 'settings.json'
 
+def generate_and_save_keys(settings):
+     symmetric_key = generate_symmetric_key()
+     private_key, public_key = generate_asymmetric_keys()
+     save_asymmetric_keys(private_key, public_key,
+     settings['secret_key'], settings['public_key'])
+     cipher_symmetric_key = encrypt_asymmetric( public_key, symmetric_key)
+     save_symmetric_key(cipher_symmetric_key, settings['symmetric_key'])
+
+def generate_keys_and_save(args, settings):
+    if args.generation:
+        generate_and_save_keys(settings)
+        #     symmetric_key = generate_symmetric_key()
+        #     private_key, public_key = generate_asymmetric_keys()
+        #     save_asymmetric_keys(private_key, public_key,
+        #                          settings['secret_key'], settings['public_key'])
+        #     cipher_symmetric_key = encrypt_asymmetric(
+        #         public_key, symmetric_key)
+        #     save_symmetric_key(cipher_symmetric_key, settings['symmetric_key'])
+
+def encrypt_file(settings):
+    private_key = load_private_key(settings['secret_key'])
+    cipher_key = load_symmetric_key(settings['symmetric_key'])
+    symmetric_key = decrypt_asymmetric(private_key, cipher_key)
+    text = read_text(settings['initial_file'])
+    cipher_text = encrypt_symmetric(symmetric_key, text)
+    write_text(cipher_text, settings['encrypted_file'])
+            # private_key = load_private_key(settings['secret_key'])
+            # cipher_key = load_symmetric_key(settings['symmetric_key'])
+            # symmetric_key = decrypt_asymmetric(private_key, cipher_key)
+            # text = read_text(settings['initial_file'])
+            # cipher_text = encrypt_symmetric(symmetric_key, text)
+            # write_text(cipher_text, settings['encrypted_file'])
+def decrypt_file(settings):
+    private_key = load_private_key(settings['secret_key'])
+    cipher_key = load_symmetric_key(settings['symmetric_key'])
+    symmetric_key = decrypt_asymmetric(private_key, cipher_key)
+    cipher_text = read_text(settings['encrypted_file'])
+    text = decrypt_symmetric(symmetric_key, cipher_text)
+    write_text(text, settings['decrypted_file'])
+
+            # private_key = load_private_key(settings['secret_key'])
+            # cipher_key = load_symmetric_key(settings['symmetric_key'])
+            # symmetric_key = decrypt_asymmetric(private_key, cipher_key)
+            # cipher_text = read_text(settings['encrypted_file'])
+            # text = decrypt_symmetric(symmetric_key, cipher_text)
+            # write_text(text, settings['decrypted_file'])
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-set', '--settings', default=SETTINGS_FILE, type=str, help='Позволяет использовать собственный json-файл с указанием путей'
@@ -19,26 +66,11 @@ if __name__ == '__main__':
                        help='Запускает режим дешифрования')
     args = parser.parse_args()
     settings = load_settings(args.settings)
-    if settings:
-        if args.generation:
-            symmetric_key = generate_symmetric_key()
-            private_key, public_key = generate_asymmetric_keys()
-            save_asymmetric_keys(private_key, public_key,
-                                 settings['secret_key'], settings['public_key'])
-            cipher_symmetric_key = encrypt_asymmetric(
-                public_key, symmetric_key)
-            save_symmetric_key(cipher_symmetric_key, settings['symmetric_key'])
-        elif args.encryption:
-            private_key = load_private_key(settings['secret_key'])
-            cipher_key = load_symmetric_key(settings['symmetric_key'])
-            symmetric_key = decrypt_asymmetric(private_key, cipher_key)
-            text = read_text(settings['initial_file'])
-            cipher_text = encrypt_symmetric(symmetric_key, text)
-            write_text(cipher_text, settings['encrypted_file'])
-        else:
-            private_key = load_private_key(settings['secret_key'])
-            cipher_key = load_symmetric_key(settings['symmetric_key'])
-            symmetric_key = decrypt_asymmetric(private_key, cipher_key)
-            cipher_text = read_text(settings['encrypted_file'])
-            text = decrypt_symmetric(symmetric_key, cipher_text)
-            write_text(text, settings['decrypted_file'])
+    if args.generation:
+        generate_and_save_keys(settings)
+    if args.encryption:
+        encrypt_file(settings)
+    if args.decryption:
+        decrypt_file(settings)
+
+
